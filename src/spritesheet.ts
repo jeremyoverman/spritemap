@@ -6,7 +6,7 @@ export interface IOpts {
 
 export class SpriteSheet {
     opts: IOpts;
-    src: string;
+    src: string | HTMLImageElement | HTMLCanvasElement;
     image: HTMLImageElement;
     canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
@@ -15,12 +15,43 @@ export class SpriteSheet {
     /**
      * A sliced sprite sheet
      * 
-     * @param src The source of the sprite sheet image
+     * @param image The source of the sprite sheet image
      * @param opts The options for the spritesheet
      */
-    constructor (src: string, opts: IOpts) {
+    constructor (src: string | HTMLImageElement | HTMLCanvasElement, opts: IOpts) {
         this.src = src;
         this.opts = opts;
+    }
+
+    private imageToCanvas (img: HTMLImageElement) {
+        let [canvas, context] = this.createCanvas();
+
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+
+        context.drawImage(img, 0, 0);
+
+        return canvas;
+    }
+
+    private getCanvasFromSource (source: string | HTMLImageElement | HTMLCanvasElement): Promise<HTMLCanvasElement> {
+        return new Promise((resolve, reject) => {
+            if (source instanceof HTMLCanvasElement) {
+                resolve(source);
+            } else if (source instanceof HTMLImageElement) {
+                let canvas = this.imageToCanvas(source);
+
+                resolve(canvas);
+            } else if (typeof source === 'string') {
+                this.createImage(source).then((img) => {
+                    let canvas = this.imageToCanvas(img);
+
+                    resolve(canvas);
+                });
+            } else {
+                reject(new Error('Unable to convert source to canvas'));
+            }
+        });
     }
 
     /**
@@ -54,13 +85,15 @@ export class SpriteSheet {
     /**
      * Cut an image into sprites based on the tile size
      * 
-     * @param image The HTML Image Element to be cut
+     * @param sheet The HTML Image Element to be cut
      * @param tile_size The width and height of each slice
      */
-    cutSheet (image: HTMLImageElement, tile_size: number) {
-        let width = image.naturalWidth;
-        let height = image.naturalWidth;
+    cutSheet (sheet: HTMLCanvasElement, tile_size: number) {
+        let width = sheet.width;
+        let height = sheet.height;
         let sprites: Sprite.Sprite[][] = [];
+
+        console.log(width, height);
 
         // For every row
         for (let x = 0; x < width; x += tile_size) {
@@ -72,7 +105,7 @@ export class SpriteSheet {
                 canvas.width = canvas.height = tile_size;
 
                 context.drawImage(
-                    image, // The input image
+                    sheet, // The input image
                     x, y, tile_size, tile_size, // The source parameters
                     0, 0, tile_size, tile_size // The destination parameters
                 );
@@ -103,19 +136,10 @@ export class SpriteSheet {
      */
     load () {
         return new Promise((resolve, reject) => {
-            this.createImage(this.src)
-                .then((img) => {
-                    let [canvas, context] = this.createCanvas();
-
-                    context.drawImage(img, 0, 0);
-
+            this.getCanvasFromSource(this.src)
+                .then(canvas => {
+                    this.sprites = this.cutSheet(canvas, this.opts.tile_size);
                     this.canvas = canvas;
-                    this.context = context;
-
-                    return img;
-                })
-                .then(img => {
-                    this.sprites = this.cutSheet(img, this.opts.tile_size);
                 })
                 .then(() => {
                     resolve(this.canvas);
