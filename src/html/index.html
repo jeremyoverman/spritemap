@@ -1,0 +1,25 @@
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>SpriteMap</title>
+    </head>
+    <script src="../bundle.js"></script>
+    <script>
+        window.onload = function () {
+            window.spriteSheet = new SpriteSheet.SpriteSheet('../samples/dungeon_tiles.png', {
+                tile_size: 16
+            });
+
+            spriteSheet.load().then((canvas) => {
+                let container = document.getElementById('spritemap');
+                container.appendChild(canvas);
+
+                document.body.appendChild(spriteSheet.getSprite(0,0).image);
+                document.body.appendChild(spriteSheet.getSprite(4,0).image);
+            });
+        }
+    </script>
+    <body>
+        <div id="spritemap"></div>
+    </body>
+</html>
