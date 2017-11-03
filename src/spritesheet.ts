@@ -23,6 +23,11 @@ export class SpriteSheet {
         this.opts = opts;
     }
 
+    /**
+     * Convert an HTMLImageElement to an HTMLCanvasElement
+     * 
+     * @param img The source image
+     */
     private imageToCanvas (img: HTMLImageElement) {
         let [canvas, context] = this.createCanvas();
 
@@ -34,6 +39,12 @@ export class SpriteSheet {
         return canvas;
     }
 
+    /**
+     * Given a file path, HTMLImageElement, or HTMLCanvasElement, return a promise
+     * of an HTMLCanvasElement
+     * 
+     * @param source The source to create a canvas from
+     */
     private getCanvasFromSource (source: string | HTMLImageElement | HTMLCanvasElement): Promise<HTMLCanvasElement> {
         return new Promise((resolve, reject) => {
             if (source instanceof HTMLCanvasElement) {
@@ -59,7 +70,7 @@ export class SpriteSheet {
      * 
      * @returns [canvas, context]
      */
-    createCanvas (): [HTMLCanvasElement, CanvasRenderingContext2D] {
+    private createCanvas (): [HTMLCanvasElement, CanvasRenderingContext2D] {
         let canvas = document.createElement('canvas');
         let context = <CanvasRenderingContext2D>canvas.getContext('2d');
 
@@ -71,7 +82,7 @@ export class SpriteSheet {
      * 
      * @param source The source of the image
      */
-    createImage (source: string): Promise<HTMLImageElement> {
+    private createImage (source: string): Promise<HTMLImageElement> {
         return new Promise((resolve, reject) => {
             let image = new Image();
 
@@ -83,12 +94,12 @@ export class SpriteSheet {
     }
 
     /**
-     * Cut an image into sprites based on the tile size
+     * Cut canvas image into sprites based on the tile size
      * 
-     * @param sheet The HTML Image Element to be cut
+     * @param sheet The HTMLCanvasElement of the sprite sheet
      * @param tile_size The width and height of each slice
      */
-    cutSheet (sheet: HTMLCanvasElement, tile_size: number) {
+    private cutSheet (sheet: HTMLCanvasElement, tile_size: number) {
         let width = sheet.width;
         let height = sheet.height;
         let sprites: Sprite.Sprite[][] = [];
