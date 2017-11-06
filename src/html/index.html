@@ -10,10 +10,7 @@
                 tile_size: 16
             });
 
-            spriteSheet.load().then((canvas) => {
-                let container = document.getElementById('spritemap');
-                container.appendChild(canvas);
-
+            spriteSheet.load().then(() => {
                 document.body.appendChild(spriteSheet.getSprite(0,0).image);
                 document.body.appendChild(spriteSheet.getSprite(4,0).image);
             });

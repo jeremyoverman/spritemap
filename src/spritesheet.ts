@@ -6,9 +6,9 @@ export interface IOpts {
 
 export class SpriteSheet {
     opts: IOpts;
-    src: string | HTMLImageElement | HTMLCanvasElement;
+    src: string | HTMLImageElement | HTMLCanvasElement | Sprite.Sprite[][];
     image: HTMLImageElement;
-    canvas: HTMLCanvasElement;
+    // canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
     sprites: Sprite.Sprite[][];
 
@@ -18,7 +18,7 @@ export class SpriteSheet {
      * @param image The source of the sprite sheet image
      * @param opts The options for the spritesheet
      */
-    constructor (src: string | HTMLImageElement | HTMLCanvasElement, opts: IOpts) {
+    constructor (src: string | HTMLImageElement | HTMLCanvasElement | Sprite.Sprite[][], opts: IOpts) {
         this.src = src;
         this.opts = opts;
     }
@@ -131,6 +131,32 @@ export class SpriteSheet {
         return sprites;
     }
 
+    isSpriteGrid (sprites: any): sprites is Sprite.Sprite[][] {
+        let valid = true;
+
+        if (Array.isArray(sprites)) {
+            for (let y = 0; y += 1; y < sprites.length) {
+                let row = sprites[y];
+
+                if (!Array.isArray(row)) {
+                    valid = false;
+                    break;
+                }
+
+                for (let x = 0; x += 1; x < row.length) {
+                    let sprite = row[x];
+
+                    if (!(sprite instanceof Sprite.Sprite)) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return valid;
+    }
+
     /**
      * Get a tile at (x, y)
      * 
@@ -147,13 +173,17 @@ export class SpriteSheet {
      */
     load () {
         return new Promise((resolve, reject) => {
+            if (this.isSpriteGrid(this.src)) {
+                this.sprites = this.src;
+                return resolve();
+            }
+
             this.getCanvasFromSource(this.src)
-                .then(canvas => {
+                .then((canvas: HTMLCanvasElement) => {
                     this.sprites = this.cutSheet(canvas, this.opts.tile_size);
-                    this.canvas = canvas;
                 })
                 .then(() => {
-                    resolve(this.canvas);
+                    resolve();
                 });
         });
     }
