@@ -10,12 +10,16 @@ export interface IOptions {
 export const DEFAULT_OPTIONS: IOptions = {
     width: 16,
     height: 16,
-    zoom: 20
+    zoom: 20 
 }
 
 export class Creator {
     private sprite: Sprite.Sprite;
+    private previousDrawCoordinate: [number, number];
+
+    private isMouseDown: boolean = false;
     private isGridActive: boolean = false;
+    private isDrawing: boolean = false;
 
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
@@ -30,6 +34,7 @@ export class Creator {
 
         this.setGrid(this.isGridActive);
         this.setWidth();
+        this.createEvents();
         this.refreshSprite();
     }
 
@@ -42,11 +47,13 @@ export class Creator {
     }
 
     private setWidth () {
-        this.canvas.width = this.options.width * this.options.zoom;
-        this.canvas.height = this.options.height * this.options.zoom;
+        this.canvas.width = this.options.width * this.options.zoom + 1;
+        this.canvas.height = this.options.height * this.options.zoom + 1;
     }
 
     private refreshSprite () {
+        this.isDrawing = true;
+
         for (let x = 0; x < this.options.width; x++) {
             for (let y = 0; y < this.options.height; y++) {
                 let pixel = this.sprite.getPixel(x, y);
@@ -54,15 +61,46 @@ export class Creator {
                 this.drawPixel(x, y, pixel);
             }
         }
+
+        this.isDrawing = false;
     }
 
-    drawPixel (x: number, y: number, pixel: Sprite.IPixel) {
+    private drawPixel (x: number, y: number, pixel: Sprite.IPixel) {
         let zoom = this.options.zoom;
 
         this.ctx.fillStyle = `rgba(${pixel.red}, ${pixel.green}, ${pixel.blue}, ${pixel.alpha})`;
         this.ctx.fillRect(x * zoom, y * zoom, zoom, zoom);
 
         this.setGrid(this.isGridActive);
+    }
+
+    private handleClick (evt: MouseEvent) {
+        if (!this.isMouseDown) return;
+
+        let zoom = this.options.zoom;
+        let x = Math.floor(evt.offsetX / zoom);
+        let y = Math.floor(evt.offsetY / zoom);
+        let prev = this.previousDrawCoordinate;
+
+        if (Array.isArray(prev) && prev[0] === x && prev[1] === y) return;
+
+        this.addPixel(x, y, [255, 0, 0]);
+    }
+
+    private createEvents () {
+
+        this.canvas.addEventListener('mousemove', evt => this.handleClick(evt));
+        this.canvas.addEventListener('mouseup', evt => this.isMouseDown = false);
+        this.canvas.addEventListener('mousedown', evt => {
+            this.isMouseDown = true;
+            this.handleClick(evt);
+        });
+    }
+
+    addPixel (x: number, y: number, color: [number, number, number]) {
+        let pixel = this.sprite.setPixel(x, y, [color[0], color[1], color[2]]);
+
+        this.drawPixel(x, y, pixel);
     }
 
     setGrid (active?: boolean) {
@@ -74,13 +112,22 @@ export class Creator {
         let height = this.options.height;
         let zoom = this.options.zoom;
 
+        if (zoom === 1) return;
+
         this.ctx.fillStyle = 'rgb(0,0,0)';
 
-        for (let x = 0; x <= width; x += 1) {
-            this.drawLine(x, 0, x, height, zoom);
+        if (active) {
+            for (let x = 0; x <= width; x += 1) {
+                this.drawLine(x, 0, x, height, zoom);
 
-            for (let y = 0; y <= height; y += 1) {
-                this.drawLine(0, y, width, y, zoom);
+                for (let y = 0; y <= height; y += 1) {
+                    this.drawLine(0, y, width, y, zoom);
+                }
+            }
+        } else {
+            if (!this.isDrawing) {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.refreshSprite();
             }
         }
     }

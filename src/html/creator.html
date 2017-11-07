@@ -5,9 +5,8 @@
         <script src="../bundle.js"></script>
         <script>
             let sprite = new SpriteSheet.Sprite();
-            sprite.setPixel(2, 3, [255, 0, 0]);
-
             let creator = new SpriteSheet.Creator(sprite);
+            let palette = new SpriteSheet.Palette();
 
             creator.setGrid();
 
@@ -15,6 +14,9 @@
                 let container = document.getElementById('container');
 
                 container.appendChild(creator.canvas);
+                container.appendChild(document.createElement('br'));
+                container.appendChild(document.createElement('br'));
+                container.appendChild(palette.canvas);
             }
         </script>
     </head>
