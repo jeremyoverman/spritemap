@@ -4,11 +4,16 @@
         <title>Document</title>
         <script src="../bundle.js"></script>
         <script>
-            let sprite = new SpriteSheet.Sprite();
-            let creator = new SpriteSheet.Creator(sprite);
             let palette = new SpriteSheet.Palette();
+            let sprite;
+            let creator;
 
-            creator.setGrid();
+            SpriteSheet.getCanvasFromSource('../samples/mage.png').then(canvas => {
+                sprite = new SpriteSheet.Sprite(canvas, palette);
+                creator = new SpriteSheet.Creator(sprite);
+
+                creator.setGrid();
+            });
 
             window.onload = function () {
                 let container = document.getElementById('container');

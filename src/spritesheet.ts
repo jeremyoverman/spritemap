@@ -1,4 +1,5 @@
 import * as Sprite from './sprite';
+import * as lib from './lib';
 
 export interface IOpts {
     tile_size: number
@@ -24,76 +25,6 @@ export class SpriteSheet {
     }
 
     /**
-     * Convert an HTMLImageElement to an HTMLCanvasElement
-     * 
-     * @param img The source image
-     */
-    private imageToCanvas (img: HTMLImageElement) {
-        let [canvas, context] = this.createCanvas();
-
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-
-        context.drawImage(img, 0, 0);
-
-        return canvas;
-    }
-
-    /**
-     * Given a file path, HTMLImageElement, or HTMLCanvasElement, return a promise
-     * of an HTMLCanvasElement
-     * 
-     * @param source The source to create a canvas from
-     */
-    private getCanvasFromSource (source: string | HTMLImageElement | HTMLCanvasElement): Promise<HTMLCanvasElement> {
-        return new Promise((resolve, reject) => {
-            if (source instanceof HTMLCanvasElement) {
-                resolve(source);
-            } else if (source instanceof HTMLImageElement) {
-                let canvas = this.imageToCanvas(source);
-
-                resolve(canvas);
-            } else if (typeof source === 'string') {
-                this.createImage(source).then((img) => {
-                    let canvas = this.imageToCanvas(img);
-
-                    resolve(canvas);
-                });
-            } else {
-                reject(new Error('Unable to convert source to canvas'));
-            }
-        });
-    }
-
-    /**
-     * Create a new canvas
-     * 
-     * @returns [canvas, context]
-     */
-    private createCanvas (): [HTMLCanvasElement, CanvasRenderingContext2D] {
-        let canvas = document.createElement('canvas');
-        let context = <CanvasRenderingContext2D>canvas.getContext('2d');
-
-        return [canvas, context];
-    }
-
-    /**
-     * Create a new image
-     * 
-     * @param source The source of the image
-     */
-    private createImage (source: string): Promise<HTMLImageElement> {
-        return new Promise((resolve, reject) => {
-            let image = new Image();
-
-            image.src = source;
-            image.onload = () => {
-                resolve(image);
-            }
-        });
-    }
-
-    /**
      * Cut canvas image into sprites based on the tile size
      * 
      * @param sheet The HTMLCanvasElement of the sprite sheet
@@ -112,7 +43,7 @@ export class SpriteSheet {
 
             // For every column
             for (let y = 0; y < height; y += tile_size) {
-                let [canvas, context] = this.createCanvas();
+                let [canvas, context] = lib.createCanvas();
                 canvas.width = canvas.height = tile_size;
 
                 context.drawImage(
@@ -178,7 +109,7 @@ export class SpriteSheet {
                 return resolve();
             }
 
-            this.getCanvasFromSource(this.src)
+            lib.getCanvasFromSource(this.src)
                 .then((canvas: HTMLCanvasElement) => {
                     this.sprites = this.cutSheet(canvas, this.opts.tile_size);
                 })

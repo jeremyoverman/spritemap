@@ -1,4 +1,5 @@
 import * as Sprite from './sprite';
+import * as Palette from './palette';
 
 export interface IOptions {
     image?: HTMLCanvasElement;
@@ -56,19 +57,19 @@ export class Creator {
 
         for (let x = 0; x < this.options.width; x++) {
             for (let y = 0; y < this.options.height; y++) {
-                let pixel = this.sprite.getPixel(x, y);
+                let color = this.sprite.getPixelColor(x, y);
 
-                this.drawPixel(x, y, pixel);
+                this.drawPixel(x, y, color);
             }
         }
 
         this.isDrawing = false;
     }
 
-    private drawPixel (x: number, y: number, pixel: Sprite.IPixel) {
+    private drawPixel (x: number, y: number, color: Palette.TColor) {
         let zoom = this.options.zoom;
 
-        this.ctx.fillStyle = `rgba(${pixel.red}, ${pixel.green}, ${pixel.blue}, ${pixel.alpha})`;
+        this.ctx.fillStyle = `rgba(${color.join(',')})`;
         this.ctx.fillRect(x * zoom, y * zoom, zoom, zoom);
 
         this.setGrid(this.isGridActive);
@@ -84,11 +85,10 @@ export class Creator {
 
         if (Array.isArray(prev) && prev[0] === x && prev[1] === y) return;
 
-        this.addPixel(x, y, [255, 0, 0]);
+        this.addPixel(x, y);
     }
 
     private createEvents () {
-
         this.canvas.addEventListener('mousemove', evt => this.handleClick(evt));
         this.canvas.addEventListener('mouseup', evt => this.isMouseDown = false);
         this.canvas.addEventListener('mousedown', evt => {
@@ -97,10 +97,10 @@ export class Creator {
         });
     }
 
-    addPixel (x: number, y: number, color: [number, number, number]) {
-        let pixel = this.sprite.setPixel(x, y, [color[0], color[1], color[2]]);
+    addPixel (x: number, y: number) {
+        let color = this.sprite.palette.getCurrentColor();
 
-        this.drawPixel(x, y, pixel);
+        this.drawPixel(x, y, color);
     }
 
     setGrid (active?: boolean) {
