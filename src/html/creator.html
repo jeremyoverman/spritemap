@@ -8,20 +8,20 @@
             let sprite;
             let creator;
 
-            SpriteSheet.getCanvasFromSource('../samples/mage.png').then(canvas => {
-                sprite = new SpriteSheet.Sprite(canvas, palette);
-                creator = new SpriteSheet.Creator(sprite);
-
-                creator.setGrid();
-            });
-
             window.onload = function () {
-                let container = document.getElementById('container');
+                SpriteSheet.getCanvasFromSource('../samples/mage.png').then(canvas => {
+                    let container = document.getElementById('container');
 
-                container.appendChild(creator.canvas);
-                container.appendChild(document.createElement('br'));
-                container.appendChild(document.createElement('br'));
-                container.appendChild(palette.canvas);
+                    sprite = new SpriteSheet.Sprite(canvas, palette);
+                    creator = new SpriteSheet.Creator(sprite);
+
+                    creator.setGrid();
+
+                    container.appendChild(creator.canvas);
+                    container.appendChild(document.createElement('br'));
+                    container.appendChild(document.createElement('br'));
+                    container.appendChild(palette.canvas);
+                });
             }
         </script>
     </head>

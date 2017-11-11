@@ -1,16 +1,17 @@
 import * as Palette from './palette';
 
 export type TCoordinate = [number, number];
+export type IPixels = number[][];
 
 export class Sprite {
-    pixels: number[][];
+    pixels: IPixels;
     palette: Palette.Palette;
 
     constructor (image?: HTMLCanvasElement, palette?: Palette.Palette) {
-        this.pixels = [];
         this.palette = palette || new Palette.Palette();
 
-        if (image) this.pixelsFromImage(image);
+        if (image) this.pixels = this.pixelsFromImage(image);
+        else this.pixels = [];
 
         this.fillEmptyPixels();
     }
@@ -18,39 +19,48 @@ export class Sprite {
     private pixelsFromImage (image: HTMLCanvasElement) {
         let ctx = <CanvasRenderingContext2D>image.getContext('2d');
 
-
         let img_data = ctx.getImageData(0, 0, image.width, image.height);
         let data = img_data.data;
 
-            console.log(img_data.height);
+        let pixels: IPixels = [];
 
         for (let i = 0; i < data.length; i += 4) {
             let group = i / 4;
-            let color = Array.from(data.slice(i, i + 4));
+            let color = <Palette.TColor>Array.from(data.slice(i, i + 4));
+
+            let color_idx = this.palette.getOrSetColor(color);
 
             let x = group % img_data.width;
             let y = Math.floor(group / img_data.width);
 
-            console.log(x, y, color);
+            if (!pixels[y]) pixels[y] = [];
+
+            pixels[y][x] = color_idx;
         }
+
+        return pixels;
     }
 
     private fillEmptyPixels () {
-        for (let x = 0; x < this.pixels.length; x++) {
-            if (!this.pixels[x]) this.pixels[x] = [];
+        for (let y = 0; y < this.pixels.length; y++) {
+            if (!this.pixels[y]) this.pixels[y] = [];
 
-            for (let y = 0; y < this.pixels[x].length; y++) {
-                if (!this.pixels[x][y]) {
-                    this.pixels[x][y] = Palette.BLANK_IDX;
+            for (let x = 0; x < this.pixels[y].length; x++) {
+                if (!this.pixels[y][x]) {
+                    this.pixels[y][x] = Palette.BLANK_IDX;
                 }
             }
         }
     }
 
-    getPixel(x: number, y: number) {
-        if (!this.pixels[x]) return Palette.BLANK_IDX;
+    getDimensions (): [number, number] {
+        return [this.pixels[0].length, this.pixels[1].length];
+    }
 
-        return this.pixels[x][y] || Palette.BLANK_IDX;
+    getPixel(x: number, y: number) {
+        if (!this.pixels[y]) return Palette.BLANK_IDX;
+
+        return this.pixels[y][x] || Palette.BLANK_IDX;
     }
 
     getPixelColor(x: number, y: number) {
@@ -60,9 +70,9 @@ export class Sprite {
     }
 
     setPixel(x: number, y: number, idx: number) {
-        if (!this.pixels[x]) this.pixels[x] = [];
+        if (!this.pixels[y]) this.pixels[y] = [];
 
-        this.pixels[x][y] = idx;
+        this.pixels[y][x] = idx;
 
         this.fillEmptyPixels();
 

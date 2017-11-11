@@ -27,20 +27,22 @@ export class Palette {
 
     current: number = 0;
 
-    constructor (colors?: TColor[], size?: number) {
-        this.size = size || 8;
+    constructor (colors?: TColor[]) {
         this.canvas = document.createElement('canvas');
         this.ctx = <CanvasRenderingContext2D>this.canvas.getContext('2d');
-        this.colors = colors || DEFAULT_COLORS;
+        this.colors = colors || [];
 
+        this.setWidth();
+        this.createEvents();
+        this.drawColors();
+    }
+
+    private setWidth() {
         this.height = 120;
-        this.width = 120;
+        this.width = 120 * (Math.floor(this.colors.length / 8) + 1);
 
         this.canvas.width = this.width + (this.margin * 2) + 1;
         this.canvas.height = this.height + (this.margin * 2) + 1;
-
-        this.createEvents();
-        this.drawColors();
     }
 
     private createEvents () {
@@ -48,11 +50,14 @@ export class Palette {
             let x = evt.offsetX;
             let y = evt.offsetY;
 
-            let row = Math.floor(x / (this.height / 3))
-            let col = Math.floor(y / (this.height / 3));
+            let col = Math.floor(x / (this.height / 3))
+            let row = Math.floor(y / (this.height / 3));
 
-            let idx = row + (col * 3);
-            if (idx >= 4) idx--;
+            let group = Math.floor(col / 3);
+
+            console.log(group);
+
+            let idx = col + (row * 3) + (group * 9);
 
             if (idx >= this.colors.length ) return;
 
@@ -61,15 +66,21 @@ export class Palette {
         });
     }
 
+    private isIdxCenter(idx: number) {
+        return idx - 9 * (Math.floor(idx / 9)) === 4;
+    }
+
     private getCoordinatesFromIdx (idx: number, includeCenter?: boolean) {
         let h = this.height; // Height of the canvas
         let w = this.width; // Width of the canvas
         let s = h / 3; // Size of block
 
-        if (idx >= 4 && !includeCenter) idx++;
+        if (this.isIdxCenter(idx) && !includeCenter) idx++;
 
-        let x = (idx * s) % h; // Wrap x on the square
-        let y = Math.floor((idx * s) / h) * s; // Wrap y on the square
+        let group = Math.floor(idx / 9); 
+
+        let x = ((idx * s) % h) + (group * h); // Wrap x on the square
+        let y = (Math.floor((idx * s) / h) * s) % (s * 3); // Wrap y on the square
 
         return [x + this.margin, y + this.margin, s];
     }
@@ -84,10 +95,37 @@ export class Palette {
 
         this.ctx.fillStyle = this.getRGBAFromColor(this.getColor(idx));
         this.ctx.fillRect(x, y, s, s);
+
+        this.ctx.fillStyle = '#000000'
+        this.ctx.strokeRect(x + .5, y + .5, s, s);
+    }
+
+    getOrSetColor (color: TColor) {
+        let color_idx = 0;
+
+        let filtered = this.colors.filter((c, idx) => {
+            let is_match = color[0] === c[0] &&
+                           color[1] === c[1] &&
+                           color[2] === c[2] &&
+                           color[3] === c[3];
+
+            if (is_match) {
+                color_idx = idx;
+                return true;
+            }
+            
+        });
+
+        if (!filtered.length) color_idx = this.colors.push(color) - 1;
+
+        this.drawColors();
+
+        return color_idx;
     }
 
     setColor (idx: number, color: TColor) {
         this.colors[idx] = color;
+        this.drawColors();
     }
 
     getColor (idx: number) {
@@ -107,10 +145,12 @@ export class Palette {
     drawColors () {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        for (let i = 0, c = 0 ; i < 9; i++) {
+        this.setWidth();
+
+        for (let i = 0, c = 0 ; i < this.colors.length; i++) {
             let [x, y, s] = this.getCoordinatesFromIdx(i, true);
 
-            if (i === 4) {
+            if (this.isIdxCenter(i)) {
                 // Draw an "X"
                 this.ctx.fillStyle = '#000000';
                 this.ctx.moveTo(x, y);

@@ -28,6 +28,10 @@ export class Creator {
 
     constructor (sprite?: Sprite.Sprite, options?: IOptions) {
         this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+        if (sprite) {
+            this.sprite = sprite;
+            [this.options.width, this.options.height] = sprite.getDimensions();
+        }
         this.sprite = sprite || new Sprite.Sprite();
 
         this.canvas = document.createElement('canvas');
